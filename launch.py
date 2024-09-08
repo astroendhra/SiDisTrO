@@ -23,11 +23,22 @@ def setup(rank, world_size):
 def cleanup():
     dist.destroy_process_group()
 
+def get_device(rank):
+    if torch.cuda.is_available():
+        return torch.device(f'cuda:{rank}')
+    elif torch.backends.mps.is_available():
+        return torch.device('mps')
+    else:
+        return torch.device('cpu')
+
 def train(rank, world_size):
     setup(rank, world_size)
+    
+    device = get_device(rank)
+    print(f"Process {rank} using device: {device}")
 
-    model = SimpleModel().to(rank)
-    ddp_model = DDP(model, device_ids=[rank])
+    model = SimpleModel().to(device)
+    ddp_model = DDP(model, device_ids=[rank] if torch.cuda.is_available() else None)
     
     # Create a simple dataset
     data = torch.randn(1000, 10)
@@ -43,7 +54,7 @@ def train(rank, world_size):
 
     for epoch in range(10):
         for batch, (data, labels) in enumerate(dataloader):
-            data, labels = data.to(rank), labels.to(rank)
+            data, labels = data.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = ddp_model(data)
             loss = loss_fn(outputs, labels)
@@ -56,7 +67,7 @@ def train(rank, world_size):
     cleanup()
 
 def main():
-    world_size = 4
+    world_size = min(4, mp.cpu_count())
     mp.spawn(train, args=(world_size,), nprocs=world_size, join=True)
 
 if __name__ == "__main__":
