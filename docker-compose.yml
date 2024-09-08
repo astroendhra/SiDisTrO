@@ -1,0 +1,41 @@
+version: '3'
+services:
+  worker0:
+    build: .
+    environment:
+      - MASTER_ADDR=worker0
+      - MASTER_PORT=29500
+      - WORLD_SIZE=4
+      - RANK=0
+    ports:
+      - "29500:29500"
+
+  worker1:
+    build: .
+    environment:
+      - MASTER_ADDR=worker0
+      - MASTER_PORT=29500
+      - WORLD_SIZE=4
+      - RANK=1
+    depends_on:
+      - worker0
+
+  worker2:
+    build: .
+    environment:
+      - MASTER_ADDR=worker0
+      - MASTER_PORT=29500
+      - WORLD_SIZE=4
+      - RANK=2
+    depends_on:
+      - worker0
+
+  worker3:
+    build: .
+    environment:
+      - MASTER_ADDR=worker0
+      - MASTER_PORT=29500
+      - WORLD_SIZE=4
+      - RANK=3
+    depends_on:
+      - worker0

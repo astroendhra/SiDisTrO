@@ -57,8 +57,8 @@ def setup(rank, world_size):
         rank (int): Unique identifier of the process
         world_size (int): Total number of processes
     """
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
+    os.environ['MASTER_ADDR'] = os.environ.get('MASTER_ADDR', 'localhost')
+    os.environ['MASTER_PORT'] = os.environ.get('MASTER_PORT', '29500')
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
 def cleanup():
@@ -112,7 +112,7 @@ def save_model(model, epoch, rank):
         rank (int): Process rank
     """
     if rank == 0:  # Only save on the main process
-        torch.save(model.state_dict(), f"model_checkpoint_epoch_{epoch}.pth")
+        torch.save(model.state_dict(), f"pth/model_checkpoint_epoch_{epoch}.pth")
 
 def validate(model, val_loader, loss_fn, device, use_ddp_device):
     """
@@ -232,10 +232,10 @@ def main():
     This function determines the number of processes to spawn and
     initiates the distributed training.
     """
-    world_size = min(4, mp.cpu_count())
-    mp.spawn(train, args=(world_size,), nprocs=world_size, join=True)
+    rank = int(os.environ.get('RANK', '0'))
+    world_size = int(os.environ.get('WORLD_SIZE', '1'))
+    train(rank, world_size)
 
 if __name__ == "__main__":
-    # Enable MPS fallback for operations not supported by MPS
     os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
     main()

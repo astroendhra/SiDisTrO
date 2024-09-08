@@ -1,6 +1,6 @@
 # Simplified Distributed Training Example
 
-This project demonstrates a basic distributed training setup using PyTorch's DistributedDataParallel on a single machine with multiple processes.
+This project demonstrates a distributed training setup using PyTorch's DistributedDataParallel (DDP) on multiple machines or a single machine with multiple processes.
 
 ## Prerequisites
 
@@ -28,36 +28,66 @@ This project demonstrates a basic distributed training setup using PyTorch's Dis
 
 ## Running the Distributed Training
 
-To run the distributed training simulation:
+### Single Machine
+
+To run the distributed training simulation on a single machine:
 
 ```
-python simplified_launch_script.py
+python ddp_launch.py
 ```
 
 This will start 4 processes on your local machine, simulating a distributed training environment.
 
+### Multiple Machines
+
+To run on multiple machines:
+
+1. Choose one machine as the master node. Note its IP address.
+
+2. On the master node, modify the `ddp_launch.py` file:
+   - Set `MASTER_ADDR` to the IP address of the master node.
+   - Choose an available port number for `MASTER_PORT`.
+
+3. On each machine, run:
+   ```
+   python ddp_launch.py --node_rank <rank> --nnodes <total_nodes> --master_addr <master_ip> --master_port <port>
+   ```
+   Where:
+   - `<rank>` is the unique ID for this node (0 for master, 1, 2, etc. for others)
+   - `<total_nodes>` is the total number of machines
+   - `<master_ip>` is the IP address of the master node
+   - `<port>` is the port number chosen in step 2
+
+   Example for a 2-node setup:
+   - On master: `python ddp_launch.py --node_rank 0 --nnodes 2 --master_addr 192.168.1.100 --master_port 29500`
+   - On second node: `python ddp_launch.py --node_rank 1 --nnodes 2 --master_addr 192.168.1.100 --master_port 29500`
+
 ## Project Structure
 
-- `simplified_launch_script.py`: Contains the entire setup for distributed training, including a simple model, dataset creation, and training loop.
+- `ddp_launch.py`: Contains the setup for distributed training, including model definition, dataset creation, and training loop.
 - `requirements.txt`: Lists the Python package dependencies.
 - `README.md`: This file, containing setup and running instructions.
 
 ## Customization
 
-You can modify the following parameters in the `simplified_launch_script.py`:
+You can modify the following parameters in `ddp_launch.py`:
 
-- `world_size`: Number of processes to spawn (default is 4)
+- `world_size`: Number of processes per node (default is 4)
 - Number of epochs: Change the range in the `for epoch in range(10)` line
 - Learning rate: Modify the `lr` parameter in the optimizer initialization
-- Model architecture: Modify the `SimpleModel` class to experiment with different architectures
+- Model architecture: Modify the `Net` class to experiment with different architectures
+
+## Hardware Acceleration
+
+The script automatically detects and uses the best available hardware:
+- CUDA GPUs if available
+- Apple Silicon (MPS) on compatible Macs
+- Falls back to CPU if neither is available
 
 ## Troubleshooting
 
-If you encounter any "address already in use" errors, try changing the 'MASTER_PORT' in the setup function to a different number.
-
-## Next Steps
-
-Once this basic version is working, you can gradually add more complex features like custom optimizers or blockchain integration.
+- If you encounter "address already in use" errors, try changing the 'MASTER_PORT' to a different number.
+- For MPS devices, the script uses a workaround to initialize DDP on CPU before moving the model back to MPS.
 
 ## License
 
