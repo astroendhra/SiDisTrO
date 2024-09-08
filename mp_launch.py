@@ -5,6 +5,13 @@ This script demonstrates parallel training using Python's multiprocessing module
 It's designed to work on a single machine, utilizing multiple CPU cores or a single GPU.
 This approach is simpler than DistributedDataParallel but limited to one machine.
 
+Key Features:
+- Parallel training across multiple processes on a single machine
+- Synthetic dataset generation for demonstration
+- Simple model architecture for easy understanding
+- Device-agnostic implementation (works with CUDA, MPS, or CPU)
+- Per-process logging of training progress
+
 Usage:
     python mp_launch.py
 
@@ -20,12 +27,18 @@ import torch.multiprocessing as mp
 from torch.utils.data import DataLoader, TensorDataset
 
 class SimpleModel(nn.Module):
-    """A simple linear model for demonstration purposes."""
+    """
+    A simple linear model for demonstration purposes.
+    
+    This model consists of a single fully connected layer that maps
+    10 input features to 1 output, essentially performing linear regression.
+    """
     def __init__(self):
         super(SimpleModel, self).__init__()
         self.fc = nn.Linear(10, 1)
 
     def forward(self, x):
+        """Forward pass of the model."""
         return self.fc(x)
 
 def get_device():
@@ -46,6 +59,12 @@ def train(rank, world_size, device):
     """
     Training function to be run in parallel across multiple processes.
     
+    This function handles the entire training process for a subset of the data, including:
+    - Creating a subset of the dataset
+    - Preparing the data loader
+    - Creating the model and optimizer
+    - Training loop with logging
+    
     Args:
         rank (int): Unique identifier of the process
         world_size (int): Total number of processes
@@ -53,7 +72,7 @@ def train(rank, world_size, device):
     """
     print(f"Process {rank} using device: {device}")
 
-    # Create a simple dataset for demonstration
+    # Create a synthetic dataset for demonstration
     data = torch.randn(1000, 10)
     labels = torch.randn(1000, 1)
     dataset = TensorDataset(data, labels)
@@ -69,7 +88,8 @@ def train(rank, world_size, device):
     loss_fn = nn.MSELoss()
 
     # Training loop
-    for epoch in range(10):
+    num_epochs = 10
+    for epoch in range(num_epochs):
         total_loss = 0.0
         for batch, (data, labels) in enumerate(dataloader):
             data, labels = data.to(device), labels.to(device)
@@ -84,7 +104,12 @@ def train(rank, world_size, device):
         print(f"Process {rank}, Epoch {epoch}, Average Loss: {avg_loss:.4f}")
 
 def main():
-    """Main function to set up and run the parallel training."""
+    """
+    Main function to set up and run the parallel training.
+    
+    This function determines the number of processes to spawn,
+    selects the appropriate device, and initiates the parallel training.
+    """
     world_size = min(4, mp.cpu_count())
     device = get_device()
     

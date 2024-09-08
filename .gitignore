@@ -163,3 +163,7 @@ cython_debug/
 
 # Virtual environment
 myenv/
+
+# PyTorch model files
+pth/
+*.pth
