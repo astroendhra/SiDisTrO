@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
-from SimpleModel import SimpleModel  # Make sure this matches your model file
+from model import SimpleModel  # Make sure this matches your model file
 
 def load_model(model_path):
     model = SimpleModel()
