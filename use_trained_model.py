@@ -29,7 +29,7 @@ def predict(model, image_path):
     return predicted.item()
 
 def main():
-    model_path = 'pth/model_checkpoint_epoch_19.pth'  # Adjust this to your saved model path
+    model_path = 'model_output/cifar_net.pth'  # Adjust this to your saved model path
     model = load_model(model_path)
 
     # CIFAR-10 classes
@@ -37,7 +37,7 @@ def main():
                'dog', 'frog', 'horse', 'ship', 'truck']
 
     # Example usage
-    image_path = 'data/3.jpg'  # Replace with your test image path
+    image_path = 'data/2.jpg'  # Replace with your test image path
     prediction = predict(model, image_path)
     print(f"The image is predicted to be: {classes[prediction]}")
 
