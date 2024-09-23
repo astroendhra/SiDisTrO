@@ -11,8 +11,8 @@ This project demonstrates a distributed training setup using PyTorch's Distribut
 
 1. Clone the repository:
    ```
-   git clone https://github.com/astroendhra/simplified-distro-training.git
-   cd simplified-distro-training
+   git clone https://github.com/astroendhra/SiDisTrO.git
+   cd SiDisTrO
    ```
 
 2. Create and activate a virtual environment:
