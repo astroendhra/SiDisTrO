@@ -11,7 +11,7 @@ This project demonstrates a distributed training setup using PyTorch's Distribut
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/simplified-distro-training.git
+   git clone https://github.com/astroendhra/simplified-distro-training.git
    cd simplified-distro-training
    ```
 
