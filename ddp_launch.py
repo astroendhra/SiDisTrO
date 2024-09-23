@@ -33,6 +33,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
 from torch.optim.lr_scheduler import StepLR
 from unittest.mock import MagicMock
+import datetime
+
+# Increase timeout for initialization
+os.environ['NCCL_TIMEOUT'] = '3600'  # 1 hour timeout
+os.environ['GLOO_TIMEOUT_SECONDS'] = '3600'  # 1 hour timeout
 
 class SimpleModel(nn.Module):
     """
@@ -59,7 +64,8 @@ def setup(rank, world_size):
     """
     os.environ['MASTER_ADDR'] = os.environ.get('MASTER_ADDR', 'localhost')
     os.environ['MASTER_PORT'] = os.environ.get('MASTER_PORT', '29500')
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    # Increase timeout for initialization
+    dist.init_process_group("gloo", rank=rank, world_size=world_size, timeout=datetime.timedelta(seconds=3600))
 
 def cleanup():
     """Clean up the distributed environment."""
@@ -103,17 +109,15 @@ def create_data_loader(dataset, batch_size, rank, world_size, is_train=True):
 
 
 def save_model(model, epoch, rank):
-    """
-    Save the model checkpoint.
-    
-    Args:
-        model (nn.Module): The model to save
-        epoch (int): Current epoch number
-        rank (int): Process rank
-    """
     if rank == 0:  # Only save on the main process
-        torch.save(model.state_dict(), f"pth/model_checkpoint_epoch_{epoch}.pth")
-
+        save_dir = 'pth'
+        os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
+        save_path = os.path.join(save_dir, f"model_checkpoint_epoch_{epoch}.pth")
+        if isinstance(model, DDP):
+            torch.save(model.module.state_dict(), save_path)
+        else:
+            torch.save(model.state_dict(), save_path)
+        print(f"Model saved to {save_path}")
 def validate(model, val_loader, loss_fn, device, use_ddp_device):
     """
     Validate the model on the validation set.
