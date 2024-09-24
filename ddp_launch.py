@@ -9,6 +9,7 @@ from torch.optim.lr_scheduler import StepLR
 import torchvision
 import torchvision.transforms as transforms
 from model import SimpleModel
+from aptos_integration import AptosIntegration, compute_model_hash
 import logging
 import argparse
 
@@ -28,6 +29,8 @@ def cleanup():
 
 def train(rank, world_size, args):
     setup(rank, world_size)
+    
+    aptos = AptosIntegration(args.node_url, args.private_key)
     
     if torch.cuda.is_available():
         device = torch.device(f"cuda:{rank}")
@@ -91,6 +94,10 @@ def train(rank, world_size, args):
         dist.all_reduce(epoch_loss, op=dist.ReduceOp.SUM)
         if rank == 0:
             logging.info(f'Epoch {epoch + 1} completed. Average loss: {epoch_loss.item() / world_size:.3f}')
+            
+            # Store checkpoint on Aptos blockchain
+            model_hash = compute_model_hash(ddp_model.module.state_dict())
+            aptos.store_checkpoint(epoch, model_hash)
     
     if rank == 0:
         save_dir = 'model_output'
@@ -98,14 +105,22 @@ def train(rank, world_size, args):
         save_path = os.path.join(save_dir, 'cifar_net.pth')
         torch.save(ddp_model.module.state_dict(), save_path)
         logging.info(f'Finished Training and saved model to {save_path}')
+        
+        # Verify participation and distribute rewards
+        for r in range(world_size):
+            participant_address = f"0x{r:064x}"  # Dummy address for demonstration
+            aptos.verify_participation(participant_address)
+        aptos.distribute_rewards()
 
     cleanup()
 
 def main():
-    parser = argparse.ArgumentParser(description="Distributed training")
+    parser = argparse.ArgumentParser(description="Distributed training with Aptos integration")
     parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
     parser.add_argument('--batch-size', type=int, default=64, help='Input batch size')
     parser.add_argument('--learning-rate', type=float, default=0.001, help='Learning rate')
+    parser.add_argument('--node-url', type=str, required=True, help='Aptos node URL')
+    parser.add_argument('--private-key', type=str, required=True, help='Private key for Aptos account')
     args = parser.parse_args()
 
     world_size = int(os.environ.get('WORLD_SIZE', '1'))
