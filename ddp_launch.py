@@ -17,9 +17,9 @@ def setup(rank, world_size, epochs):
     os.environ['MASTER_ADDR'] = os.environ.get('MASTER_ADDR', 'localhost')
     os.environ['MASTER_PORT'] = os.environ.get('MASTER_PORT', '29500')
     os.environ['EPOCHS'] = os.environ.get('EPOCHS', '5')
-    logging.info(f"Initializing process group: rank={rank}, world_size={world_size}")
+    logging.info(f"Initializing process group: rank={rank}, world_size={world_size}, epochs={epochs}")
     logging.info(f"MASTER_ADDR={os.environ['MASTER_ADDR']}, MASTER_PORT={os.environ['MASTER_PORT']}")
-    dist.init_process_group("gloo", rank=rank, world_size=world_size, epochs=epochs)
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
     logging.info("Process group initialized")
 
 def cleanup():
@@ -42,8 +42,7 @@ def train(rank, world_size, epochs):
         dataset,
         num_replicas=world_size,
         rank=rank,
-        shuffle=True,
-        epochs=epochs
+        shuffle=True
     )
     
     dataloader = DataLoader(dataset, batch_size=64, sampler=sampler)
