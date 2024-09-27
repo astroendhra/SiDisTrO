@@ -1,0 +1,17 @@
+[package]
+name = "distributed_training"
+version = "1.0.0"
+authors = []
+
+[addresses]
+distributed_training = "_"
+
+[dev-addresses]
+distributed_training = "0x8ff26600cf44824ab062c8deaa8b6d3d763f003a223cc56762dd108c580db384"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]

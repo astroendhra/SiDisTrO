@@ -1,8 +1,8 @@
 from aptos_sdk.account import Account
-from aptos_sdk.client import RestClient
+from aptos_sdk.async_client import RestClient
 from aptos_sdk.transactions import EntryFunction, TransactionArgument, TransactionPayload
-from aptos_sdk.type_tag import TypeTag, StructTag
-import hashlib
+from aptos_sdk.type_tag import StructTag, TypeTag
+import logging
 
 class AptosIntegration:
     def __init__(self, node_url, private_key):
@@ -11,12 +11,12 @@ class AptosIntegration:
 
     def store_checkpoint(self, epoch, model_hash):
         payload = EntryFunction.natural(
-            "0x1::distributed_training",
+            "0x8ff26600cf44824ab062c8deaa8b6d3d763f003a223cc56762dd108c580db384::training",  # Replace with your actual module address
             "store_checkpoint",
             [],
             [
-                TransactionArgument(epoch, Serializer.u64),
-                TransactionArgument(model_hash, Serializer.string),
+                TransactionArgument(epoch, TypeTag.U64()),
+                TransactionArgument(bytes.fromhex(model_hash), TypeTag.vector(TypeTag.u8())),
             ],
         )
         
@@ -25,13 +25,14 @@ class AptosIntegration:
         )
         
         self.client.submit_bcs_transaction(signed_transaction)
+        logging.info(f"Stored checkpoint for epoch {epoch} with hash {model_hash}")
 
     def verify_participation(self, participant_address):
         payload = EntryFunction.natural(
-            "0x1::distributed_training",
+            "0x8ff26600cf44824ab062c8deaa8b6d3d763f003a223cc56762dd108c580db384::training",  # Replace with your actual module address
             "verify_participation",
             [],
-            [TransactionArgument(participant_address, Serializer.address)],
+            [TransactionArgument(participant_address, TypeTag.address())],
         )
         
         signed_transaction = self.client.create_single_signer_bcs_transaction(
@@ -39,10 +40,11 @@ class AptosIntegration:
         )
         
         self.client.submit_bcs_transaction(signed_transaction)
+        logging.info(f"Verified participation for address {participant_address}")
 
     def distribute_rewards(self):
         payload = EntryFunction.natural(
-            "0x1::distributed_training",
+            "0x8ff26600cf44824ab062c8deaa8b6d3d763f003a223cc56762dd108c580db384::training",  # Replace with your actual module address
             "distribute_rewards",
             [],
             [],
@@ -53,10 +55,4 @@ class AptosIntegration:
         )
         
         self.client.submit_bcs_transaction(signed_transaction)
-
-def compute_model_hash(model_state_dict):
-    # Compute a hash of the model parameters
-    hasher = hashlib.sha256()
-    for param in model_state_dict.values():
-        hasher.update(param.data.cpu().numpy().tobytes())
-    return hasher.hexdigest()
+        logging.info("Distributed rewards to participants")

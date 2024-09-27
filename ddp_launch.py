@@ -9,11 +9,18 @@ from torch.optim.lr_scheduler import StepLR
 import torchvision
 import torchvision.transforms as transforms
 from model import SimpleModel
-from aptos_integration import AptosIntegration, compute_model_hash
+from aptos_integration import AptosIntegration
 import logging
 import argparse
+import hashlib
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def compute_model_hash(model_state_dict):
+    hasher = hashlib.sha256()
+    for param in model_state_dict.values():
+        hasher.update(param.data.cpu().numpy().tobytes())
+    return hasher.hexdigest()
 
 def setup(rank, world_size):
     os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
